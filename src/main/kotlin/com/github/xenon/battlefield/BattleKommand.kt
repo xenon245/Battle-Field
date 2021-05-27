@@ -3,16 +3,19 @@ package com.github.xenon.battlefield
 import com.github.monun.kommand.KommandBuilder
 import com.github.monun.kommand.KommandContext
 import com.github.monun.kommand.argument.*
+import com.github.monun.kommand.sendFeedback
 import com.github.xenon.battlefield.BattleFieldPlugin.Companion.instance
 import org.bukkit.Bukkit
 import org.bukkit.Material
 import org.bukkit.Server
+import org.bukkit.configuration.file.YamlConfiguration
 import org.bukkit.entity.Player
 import org.bukkit.inventory.ItemStack
 import org.bukkit.inventory.meta.MapMeta
 import org.bukkit.map.MapRenderer
 import org.bukkit.map.MapView
 import org.bukkit.scheduler.BukkitTask
+import java.io.File
 
 object BattleKommand {
     fun register(builder: KommandBuilder) {
@@ -20,7 +23,24 @@ object BattleKommand {
             then("create") {
                 then("name" to string()) {
                     executes {
+                        require(!BattleField.field.contains(it.parseArgument("name"))) { "The name has already used" }
                         BattleField.field[it.parseArgument("name")] = BattleFieldScheduler(it.parseArgument("name"))
+                    }
+                }
+            }
+            then("remove") {
+                then("task" to TaskArgument()) {
+                    executes {
+                        val task = it.parseArgument<BattleFieldScheduler>("task")
+                        val folder = File(instance.dataFolder, "field")
+                        val file = File(folder, "${task.name}.yml")
+                        file.delete()
+                        if(BattleField.running.contains(task.name)) {
+                            BattleField.running[task.name]?.cancel()
+                            BattleField.running.remove(task.name)
+                        }
+                        BattleField.field[task.name]?.fieldBar?.isVisible = false
+                        BattleField.field.remove(task.name)
                     }
                 }
             }
@@ -42,10 +62,14 @@ object BattleKommand {
                 }
             }
             then("phase") {
-                then("task" to TaskArgument(), "phase" to integer(0, 5)) {
+                then("task" to TaskArgument(), "phase" to integer(1, 10)) {
                     executes {
                         val task = it.parseArgument<BattleFieldScheduler>("task")
-                        task.phase = it.parseArgument("phase")
+                        val phase = it.parseArgument<Int>("phase")
+                        task.phase = phase - 1
+                        task.ticks = 0
+                        task.border.setSize((1000 - 100 * (phase - 1)).toDouble(), 0)
+                        task.shrink = false
                     }
                 }
             }
@@ -61,12 +85,15 @@ object BattleKommand {
                     executes {
                         val task = it.parseArgument<BukkitTask>("task")
                         Bukkit.getServer().scheduler.runTask(instance, task::cancel)
+                        BattleField.running.remove(it.rawArguments[1])
+                        BattleField.field[it.rawArguments[1]]?.fieldBar?.isVisible = false
                     }
                 }
             }
             then("cancelall") {
                 executes {
                     Bukkit.getServer().scheduler.cancelTasks(instance)
+                    BattleField.running.clear()
                 }
             }
             then("reload") {
@@ -74,6 +101,14 @@ object BattleKommand {
                     Bukkit.getServer().run {
                         scheduler.cancelTasks(instance)
                     }
+                    BattleField.running.clear()
+                    BattleField.field.values.forEach {
+                        val folder = File(instance.dataFolder, "field").also { it.mkdirs() }
+                        val file = File(folder, "${it.name}.yml")
+                        val yaml = YamlConfiguration.loadConfiguration(file)
+                        it.load(yaml)
+                    }
+                    it.sender.sendFeedback("Battle Field Reloaded!")
                 }
             }
             then("load") {
