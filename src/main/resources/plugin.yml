@@ -1,5 +1,13 @@
-main: com.github.monulo.sampleplugin.SamplePlugin
+main: com.github.xenon.battlefield.BattleFieldPlugin
 version: 1.0
-name: Tap-Sample-Plugin
+name: BattleField
 api-version: 1.16
 depend: [Kotlin, ProtocolLib]
+commands:
+  bf:
+    description: command for battle field
+    permission: command.bf
+permissions:
+  command.bf:
+    description: permission for battle field
+    default: op
