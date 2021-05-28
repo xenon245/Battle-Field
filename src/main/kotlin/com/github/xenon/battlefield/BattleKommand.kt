@@ -52,15 +52,14 @@ object BattleKommand {
                     meta.mapView = Bukkit.getServer().createMap(Bukkit.getWorlds().first())
                     val mapView = meta.mapView
                     val renderer = CustomMapRenderer()
-                    mapView?.renderers?.clear()
+                    mapView?.renderers?.take(1)?.forEach { mapView.removeRenderer(it) }
+                    meta.isScaling = true
                     mapView?.addRenderer(renderer)
                     mapView?.scale = MapView.Scale.FAR
                     mapView?.setWorld(Bukkit.getWorlds().first())
                     mapView?.centerX = 0
                     mapView?.centerZ = 0
-                    mapView?.isLocked = true
-                    mapView?.isTrackingPosition = true
-                    mapView?.isUnlimitedTracking = false
+                    meta.mapView = mapView
                     map.itemMeta = meta
                     Bukkit.getOnlinePlayers().forEach {
                         it.inventory.addItem(map)
