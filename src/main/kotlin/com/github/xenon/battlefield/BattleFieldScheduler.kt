@@ -6,28 +6,27 @@ import org.bukkit.boss.BarColor
 import org.bukkit.boss.BarStyle
 import org.bukkit.boss.BossBar
 import org.bukkit.configuration.file.YamlConfiguration
+import org.bukkit.util.Vector
 import kotlin.random.Random
 import kotlin.random.Random.Default.nextDouble
 
 class BattleFieldScheduler(var name: String) : Runnable {
     var phase = 0
-    var center = Bukkit.getWorlds().first().getHighestBlockAt(0, 0)
+    var nextLoc = Bukkit.getWorlds().first().getHighestBlockAt(0, 0)
     val border = Bukkit.getWorlds().first().worldBorder
     var ticks = 0
     var firstPhase = 600 * 20
-    var secondPhase = 20
-    var thirdPhase = 40
-    var fourthPhase = 60
-    var fifthPhase = 80
-    var sixthPhase = 100
-    var seventhPhase = 120
-    var eightPhase = 140
-    var ninePhase = 160
-    var tenthPhase = 180
+    var secondPhase = 500 * 20
+    var thirdPhase = 400 * 20
+    var fourthPhase = 300 * 20
+    var fifthPhase = 200 * 20
+    var sixthPhase = 100 * 20
+    var seventhPhase = 100 * 20
+    var eightPhase = 300 * 20
     var fieldBar : BossBar? = null
     var shrink = false
-    var nextLocation : Location? = null
     var borderTicks = 0
+    var direction = Vector(0, 0, 0)
     init {
         fieldBar = Bukkit.createBossBar("전장 축소까지 600 초", BarColor.BLUE, BarStyle.SEGMENTED_10).apply {
             Bukkit.getOnlinePlayers().forEach {
@@ -43,7 +42,12 @@ class BattleFieldScheduler(var name: String) : Runnable {
             fieldBar?.isVisible = true
             fieldBar?.style = BarStyle.SEGMENTED_10
             fieldBar?.color = BarColor.BLUE
-            val time = if(phase == 0) firstPhase - ticks else if(phase == 1) secondPhase - ticks else if(phase == 2) thirdPhase - ticks else if(phase == 3) fourthPhase - ticks else if(phase == 4) fifthPhase - ticks else if(phase == 5) sixthPhase - ticks else if(phase == 6) seventhPhase - ticks else if (phase == 7) eightPhase - ticks else if (phase == 8) ninePhase - ticks else tenthPhase - ticks
+            val time = if(phase == 0) firstPhase - ticks else if(phase == 1) secondPhase - ticks else if(phase == 2) thirdPhase - ticks else if(phase == 3) fourthPhase - ticks else if(phase == 4) fifthPhase - ticks else if(phase == 5) sixthPhase - ticks else if(phase == 6) seventhPhase - ticks else eightPhase - ticks
+            if(time == time + ticks) {
+                if(border.center != nextLoc.location) {
+                    nextLoc = nextLoc.location.random(border.size / 2).block
+                }
+            }
             if(time >= -1) {
                 fieldBar?.setTitle("전장 축소까지 ${(time / 20).toInt()}.${(time / 2) % 10}초")
                 fieldBar?.progress = (time.toDouble() / (time + ticks).toDouble()).coerceIn(0.0, 1.0)
@@ -62,8 +66,12 @@ class BattleFieldScheduler(var name: String) : Runnable {
                     border.setSize(border.size - 1, 1)
                     borderTicks = 0
                 }
+                border.run {
+                    direction = nextLoc.location.subtract(center.toHighestLocation()).multiply(1.0 / 2000.0).toVector()
+                    center = center.add(direction)
+                }
             } else {
-                if(phase == 9) {
+                if(phase == 7) {
                     fieldBar?.isVisible = false
                     BattleField.running[name]?.cancel()
                     BattleField.running.remove(name)
@@ -88,7 +96,7 @@ class BattleFieldScheduler(var name: String) : Runnable {
         config["thirdPhase"] = thirdPhase
         config["fourthPhase"] = fourthPhase
         config["fifthPhase"] = fifthPhase
-        config["center"] = center.location
+        config["center"] = nextLoc.location
     }
     fun load(config: YamlConfiguration) {
         name = requireNotNull(config.getString("name")) { "Name must not be null!" }
@@ -99,6 +107,6 @@ class BattleFieldScheduler(var name: String) : Runnable {
         fourthPhase = requireNotNull(config.getInt("fourthPhase")) { "First Phase must not be null!" }
         fifthPhase = requireNotNull(config.getInt("fifthPhase")) { "First Phase must not be null!" }
         val loc = requireNotNull(config.getLocation("center")) { "Location must not be null!" }
-        center = loc.block
+        nextLoc = loc.block
     }
 }
