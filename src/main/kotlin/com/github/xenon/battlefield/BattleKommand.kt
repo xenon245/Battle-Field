@@ -51,32 +51,45 @@ object BattleKommand {
                     val meta = map.itemMeta as MapMeta
                     meta.mapView = Bukkit.getServer().createMap(Bukkit.getWorlds().first())
                     val mapView = meta.mapView
-                    mapView?.scale = MapView.Scale.FARTHEST
+                    val renderer = CustomMapRenderer()
+                    mapView?.renderers?.clear()
+                    mapView?.addRenderer(renderer)
+                    mapView?.scale = MapView.Scale.FAR
                     mapView?.setWorld(Bukkit.getWorlds().first())
                     mapView?.centerX = 0
                     mapView?.centerZ = 0
                     mapView?.isLocked = true
                     mapView?.isTrackingPosition = true
+                    mapView?.isUnlimitedTracking = false
                     map.itemMeta = meta
-                    (it.sender as Player).inventory.addItem(map)
+                    Bukkit.getOnlinePlayers().forEach {
+                        it.inventory.addItem(map)
+                    }
                 }
             }
             then("phase") {
-                then("task" to TaskArgument(), "phase" to integer(1, 10)) {
+                then("task" to TaskArgument(), "phase" to integer(1, 8)) {
                     executes {
                         val task = it.parseArgument<BattleFieldScheduler>("task")
                         val phase = it.parseArgument<Int>("phase")
                         task.phase = phase - 1
                         task.ticks = 0
-                        task.border.setSize((1000 - 100 * (phase - 1)).toDouble(), 0)
+                        if(phase - 1 == 7) {
+                            task.border.setSize((1000 - 100 * (phase - 1) - 100).toDouble(), 0)
+                        } else {
+                            task.border.setSize((1000 - 100 * (phase - 1)).toDouble(), 0)
+                        }
                         task.shrink = false
                     }
                 }
             }
             then("center") {
-                then("x" to double(-500.0, 500.0), "z" to double(-500.0, 500.0)) {
-                    executes {
-                        Bukkit.getWorlds().first().worldBorder.setCenter(it.parseArgument("x"), it.parseArgument("z"))
+                then("task" to TaskArgument()) {
+                    then("x" to double(-500.0, 500.0), "z" to double(-500.0, 500.0)) {
+                        executes {
+                            val task = it.parseArgument<BattleFieldScheduler>("task")
+                            task.nextLoc = Bukkit.getWorlds().first().getHighestBlockAt(it.parseArgument<Double>("x").toInt(), it.parseArgument<Double>("z").toInt())
+                        }
                     }
                 }
             }
@@ -93,6 +106,9 @@ object BattleKommand {
             then("cancelall") {
                 executes {
                     Bukkit.getServer().scheduler.cancelTasks(instance)
+                    BattleField.field.values.forEach {
+                        it.fieldBar?.isVisible = false
+                    }
                     BattleField.running.clear()
                 }
             }
