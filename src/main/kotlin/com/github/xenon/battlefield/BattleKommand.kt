@@ -52,7 +52,7 @@ object BattleKommand {
                     meta.mapView = Bukkit.getServer().createMap(Bukkit.getWorlds().first())
                     val mapView = meta.mapView
                     val renderer = CustomMapRenderer()
-                    mapView?.renderers?.take(1)?.forEach { mapView.removeRenderer(it) }
+                    mapView?.renderers?.forEach(mapView::removeRenderer)
                     meta.isScaling = true
                     mapView?.addRenderer(renderer)
                     mapView?.scale = MapView.Scale.FAR
