@@ -1,6 +1,8 @@
 package com.github.xenon.battlefield
 
 import com.github.xenon.battlefield.BattleFieldPlugin.Companion.instance
+import net.md_5.bungee.api.ChatColor
+import org.bukkit.Bukkit
 import org.bukkit.Color
 import org.bukkit.entity.Player
 import org.bukkit.map.*
@@ -26,5 +28,21 @@ class CustomMapRenderer : MapRenderer() {
         val folder = File(instance.dataFolder, "map").also { it.mkdirs() }
         val image = ImageIO.read(File(folder, "map.png"))
         canvas.drawImage(0, 0, image.getSubimage(0, 0, 128, 128))
+        val worldBorderSize = Bukkit.getWorlds().first().worldBorder.size / 1000 * 64
+        for(i in (64 - worldBorderSize).toInt()..(64 + worldBorderSize).toInt()) {
+            if(!BattleField.field.values.first().shrink) {
+                canvas.setPixel(i, 64 - worldBorderSize.toInt(), MapPalette.BLUE)
+                canvas.setPixel(i, 64 + worldBorderSize.toInt(), MapPalette.BLUE)
+                canvas.setPixel(64 - worldBorderSize.toInt(), i, MapPalette.BLUE)
+                canvas.setPixel(64 + worldBorderSize.toInt(), i, MapPalette.BLUE)
+            } else {
+                canvas.setPixel(i, 64 - worldBorderSize.toInt(), MapPalette.RED)
+                canvas.setPixel(i, 64 + worldBorderSize.toInt(), MapPalette.RED)
+                canvas.setPixel(64 - worldBorderSize.toInt(), i, MapPalette.RED)
+                canvas.setPixel(64 + worldBorderSize.toInt(), i, MapPalette.RED)
+            }
+        }
+        val nextLoc = BattleField.field.values.first().nextLoc.location
+        val phase = BattleField.field.values.first().phase
     }
 }

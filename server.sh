@@ -1,6 +1,6 @@
 #!/bin/bash
 
-./gradlew copyToServer
+./gradlew clean copyToServer
 
 server=paper
 version=1.16.5

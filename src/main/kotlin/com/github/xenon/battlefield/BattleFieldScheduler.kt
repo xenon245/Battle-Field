@@ -27,7 +27,7 @@ class BattleFieldScheduler(var name: String) : Runnable {
     var fifthPhase = 200 * 20
     var sixthPhase = 100 * 20
     var seventhPhase = 100 * 20
-    var eightPhase = 300 * 20
+    var eightPhase = 100 * 20
     var fieldBar : BossBar? = null
     var shrink = false
     var borderTicks = 0

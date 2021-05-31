@@ -5,6 +5,7 @@ import com.github.monun.kommand.KommandContext
 import com.github.monun.kommand.argument.*
 import com.github.monun.kommand.sendFeedback
 import com.github.xenon.battlefield.BattleFieldPlugin.Companion.instance
+import net.kyori.adventure.text.Component.text
 import org.bukkit.Bukkit
 import org.bukkit.Material
 import org.bukkit.Server
@@ -45,7 +46,6 @@ object BattleKommand {
                 }
             }
             then("item") {
-                require { this is Player }
                 executes {
                     val map = ItemStack(Material.FILLED_MAP)
                     val meta = map.itemMeta as MapMeta
@@ -123,7 +123,9 @@ object BattleKommand {
                         val yaml = YamlConfiguration.loadConfiguration(file)
                         it.load(yaml)
                     }
-                    it.sender.sendFeedback("Battle Field Reloaded!")
+                    it.sender.sendFeedback {
+                        text("Battle Field Reloaded!")
+                    }
                 }
             }
             then("load") {
