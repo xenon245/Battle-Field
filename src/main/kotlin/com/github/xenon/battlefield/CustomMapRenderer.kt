@@ -6,6 +6,7 @@ import org.bukkit.Bukkit
 import org.bukkit.Color
 import org.bukkit.entity.Player
 import org.bukkit.map.*
+import org.bukkit.util.Vector
 import java.io.File
 import javax.imageio.ImageIO
 
@@ -28,8 +29,20 @@ class CustomMapRenderer : MapRenderer() {
         val folder = File(instance.dataFolder, "map").also { it.mkdirs() }
         val image = ImageIO.read(File(folder, "map.png"))
         canvas.drawImage(0, 0, image.getSubimage(0, 0, 128, 128))
-        val worldBorderSize = Bukkit.getWorlds().first().worldBorder.size / 1000 * 64
-        for(i in (64 - worldBorderSize).toInt()..(64 + worldBorderSize).toInt()) {
+        val nextLoc = BattleField.field.values.first().nextLoc.location.toVector()
+        val phase = BattleField.field.values.first().phase
+        val nextWorldBorderSize = ((1000.toDouble() - (phase + 1).toDouble() * 100.toDouble()) / 1000.0 * 64.0).toInt()
+        val center = nextLoc.multiply(64 / 1000).add(Vector(64, 0, 64))
+        for(i in (center.x - nextWorldBorderSize).toInt()..(center.x + nextWorldBorderSize).toInt()) {
+            canvas.setPixel(i, (center.z - nextWorldBorderSize).toInt(), MapPalette.WHITE)
+            canvas.setPixel(i, (center.z + nextWorldBorderSize).toInt(), MapPalette.WHITE)
+        }
+        for(i in (center.z - nextWorldBorderSize).toInt()..(center.z + nextWorldBorderSize).toInt()) {
+            canvas.setPixel((center.x - nextWorldBorderSize).toInt(), i, MapPalette.WHITE)
+            canvas.setPixel((center.x + nextWorldBorderSize).toInt(), i, MapPalette.WHITE)
+        }
+        val worldBorderSize = Bukkit.getWorlds().first().worldBorder.size / 1000.0 * 64.0
+        for(i in (64.toDouble() - worldBorderSize).toInt()..(64.toDouble() + worldBorderSize).toInt()) {
             if(!BattleField.field.values.first().shrink) {
                 canvas.setPixel(i, 64 - worldBorderSize.toInt(), MapPalette.BLUE)
                 canvas.setPixel(i, 64 + worldBorderSize.toInt(), MapPalette.BLUE)
@@ -42,7 +55,5 @@ class CustomMapRenderer : MapRenderer() {
                 canvas.setPixel(64 + worldBorderSize.toInt(), i, MapPalette.RED)
             }
         }
-        val nextLoc = BattleField.field.values.first().nextLoc.location
-        val phase = BattleField.field.values.first().phase
     }
 }

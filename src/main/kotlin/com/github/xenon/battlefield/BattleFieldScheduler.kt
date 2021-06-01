@@ -27,7 +27,9 @@ class BattleFieldScheduler(var name: String) : Runnable {
     var fifthPhase = 200 * 20
     var sixthPhase = 100 * 20
     var seventhPhase = 100 * 20
-    var eightPhase = 100 * 20
+    var eightPhase = 300 * 20
+    var ninethPhase = 200 * 20
+    var tenthPhase = 100 * 20
     var fieldBar : BossBar? = null
     var shrink = false
     var borderTicks = 0
@@ -79,7 +81,7 @@ class BattleFieldScheduler(var name: String) : Runnable {
             fieldBar?.isVisible = true
             fieldBar?.style = BarStyle.SEGMENTED_10
             fieldBar?.color = BarColor.BLUE
-            val time = if(phase == 0) firstPhase - ticks else if(phase == 1) secondPhase - ticks else if(phase == 2) thirdPhase - ticks else if(phase == 3) fourthPhase - ticks else if(phase == 4) fifthPhase - ticks else if(phase == 5) sixthPhase - ticks else if(phase == 6) seventhPhase - ticks else eightPhase - ticks
+            val time = if(phase == 0) firstPhase - ticks else if(phase == 1) secondPhase - ticks else if(phase == 2) thirdPhase - ticks else if(phase == 3) fourthPhase - ticks else if(phase == 4) fifthPhase - ticks else if(phase == 5) sixthPhase - ticks else if(phase == 6) seventhPhase - ticks else if(phase == 7) eightPhase - ticks else if(phase == 8) ninethPhase - ticks else tenthPhase - ticks
             if(time == time + ticks) {
                 if(border.center != nextLoc.location) {
                     nextLoc = nextLoc.location.random(border.size / 2).block
@@ -97,7 +99,7 @@ class BattleFieldScheduler(var name: String) : Runnable {
                 fieldBar?.style = BarStyle.SOLID
                 fieldBar?.color = BarColor.RED
                 fieldBar?.setTitle("전장 축소 중... ${ticks / 2000}.${ticks / 200}")
-                if(phase == 7) {
+                if(phase == 9) {
                     heightTicks++
                     if(heightTicks == 40) {
                         bottom++
@@ -105,27 +107,18 @@ class BattleFieldScheduler(var name: String) : Runnable {
                         heightTicks = 0
                     }
                 }
-                if(phase == 6 || phase == 7) {
-                    fieldBar?.progress = (ticks.toDouble() / 2000).coerceIn(0.0, 1.0)
-                    borderTicks++
-                    if(borderTicks == 20) {
-                        border.setSize(border.size - 2, 1)
-                        borderTicks = 0
-                    }
-                } else {
-                    fieldBar?.progress = (ticks.toDouble() / 2000).coerceIn(0.0, 1.0)
-                    borderTicks++
-                    if(borderTicks == 20) {
-                        border.setSize(border.size - 1, 1)
-                        borderTicks = 0
-                    }
+                fieldBar?.progress = (ticks.toDouble() / 2000).coerceIn(0.0, 1.0)
+                borderTicks++
+                if(borderTicks == 20) {
+                    border.setSize(border.size - 1, 1)
+                    borderTicks = 0
                 }
                 border.run {
                     direction = nextLoc.location.subtract(center.toHighestLocation()).multiply(1.0 / 2000.0).toVector()
                     center = center.add(direction)
                 }
             } else {
-                if(phase == 7) {
+                if(phase == 9) {
                     border.setSize(1.0, 1)
                     fieldBar?.isVisible = false
                     BattleField.running[name]?.cancel()
@@ -154,6 +147,8 @@ class BattleFieldScheduler(var name: String) : Runnable {
         config["sixthPhase"] = sixthPhase
         config["seventhPhase"] = seventhPhase
         config["eighthPhase"] = eightPhase
+        config["ninethPhase"] = ninethPhase
+        config["tenthPhase"] = tenthPhase
         config["center"] = nextLoc.location
     }
     fun load(config: YamlConfiguration) {
@@ -167,6 +162,8 @@ class BattleFieldScheduler(var name: String) : Runnable {
         sixthPhase = requireNotNull(config.getInt("sixthPhase")) { "Sixth Phase must not be null!" }
         seventhPhase = requireNotNull(config.getInt("seventhPhase")) { "Seventh Phase must not be null!" }
         eightPhase = requireNotNull(config.getInt("eighthPhase")) { "Eighth Phase must not be null!" }
+        ninethPhase = requireNotNull(config.getInt("ninethPhase")) { "Nineth Phase must not be null!" }
+        tenthPhase = requireNotNull(config.getInt("tenthPhase")) { "Tenth Phase must not be null!" }
         val loc = requireNotNull(config.getLocation("center")) { "Location must not be null!" }
         nextLoc = loc.block
     }

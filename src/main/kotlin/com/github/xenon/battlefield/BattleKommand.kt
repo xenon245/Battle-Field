@@ -6,9 +6,7 @@ import com.github.monun.kommand.argument.*
 import com.github.monun.kommand.sendFeedback
 import com.github.xenon.battlefield.BattleFieldPlugin.Companion.instance
 import net.kyori.adventure.text.Component.text
-import org.bukkit.Bukkit
-import org.bukkit.Material
-import org.bukkit.Server
+import org.bukkit.*
 import org.bukkit.configuration.file.YamlConfiguration
 import org.bukkit.entity.Player
 import org.bukkit.inventory.ItemStack
@@ -46,28 +44,31 @@ object BattleKommand {
                 }
             }
             then("item") {
-                executes {
-                    val map = ItemStack(Material.FILLED_MAP)
-                    val meta = map.itemMeta as MapMeta
-                    meta.mapView = Bukkit.getServer().createMap(Bukkit.getWorlds().first())
-                    val mapView = meta.mapView
-                    val renderer = CustomMapRenderer()
-                    mapView?.renderers?.forEach(mapView::removeRenderer)
-                    meta.isScaling = true
-                    mapView?.addRenderer(renderer)
-                    mapView?.scale = MapView.Scale.FAR
-                    mapView?.setWorld(Bukkit.getWorlds().first())
-                    mapView?.centerX = 0
-                    mapView?.centerZ = 0
-                    meta.mapView = mapView
-                    map.itemMeta = meta
-                    Bukkit.getOnlinePlayers().forEach {
-                        it.inventory.addItem(map)
+                then("world" to world()) {
+                    executes {
+                        val world = it.parseArgument<World>("world")
+                        val map = ItemStack(Material.FILLED_MAP)
+                        val meta = map.itemMeta as MapMeta
+                        meta.mapView = Bukkit.getServer().createMap(Bukkit.getWorlds().first())
+                        val mapView = meta.mapView
+                        val renderer = CustomMapRenderer()
+                        mapView?.renderers?.forEach(mapView::removeRenderer)
+                        meta.isScaling = true
+                        mapView?.addRenderer(renderer)
+                        mapView?.scale = MapView.Scale.FAR
+                        mapView?.setWorld(Bukkit.getWorlds().first())
+                        mapView?.centerX = 0
+                        mapView?.centerZ = 0
+                        meta.mapView = mapView
+                        map.itemMeta = meta
+                        world.players.forEach {
+                            it.inventory.addItem(map)
+                        }
                     }
                 }
             }
             then("phase") {
-                then("task" to TaskArgument(), "phase" to integer(1, 8)) {
+                then("task" to TaskArgument(), "phase" to integer(1, 10)) {
                     executes {
                         val task = it.parseArgument<BattleFieldScheduler>("task")
                         val phase = it.parseArgument<Int>("phase")
@@ -134,6 +135,26 @@ object BattleKommand {
                         val task = it.parseArgument<BattleFieldScheduler>("task")
                         val task2 = Bukkit.getScheduler().runTaskTimer(instance, task, 0L, 1L)
                         BattleField.running[task.name] = task2
+                        Bukkit.getOnlinePlayers().forEach {
+                            it.sendTitle("${ChatColor.RED}게임 시작", "")
+                        }
+                        val map = ItemStack(Material.FILLED_MAP)
+                        val meta = map.itemMeta as MapMeta
+                        meta.mapView = Bukkit.getServer().createMap(Bukkit.getWorlds().first())
+                        val mapView = meta.mapView
+                        val renderer = CustomMapRenderer()
+                        mapView?.renderers?.forEach(mapView::removeRenderer)
+                        meta.isScaling = true
+                        mapView?.addRenderer(renderer)
+                        mapView?.scale = MapView.Scale.FAR
+                        mapView?.setWorld(Bukkit.getWorlds().first())
+                        mapView?.centerX = 0
+                        mapView?.centerZ = 0
+                        meta.mapView = mapView
+                        map.itemMeta = meta
+                        Bukkit.getOnlinePlayers().forEach {
+                            it.inventory.addItem(map)
+                        }
                     }
                 }
             }
